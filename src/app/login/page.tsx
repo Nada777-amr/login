@@ -28,7 +28,7 @@ export default function LoginPage() {
       } else {
         setError(result.error)
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)
@@ -47,35 +47,13 @@ export default function LoginPage() {
       } else {
         setError(result.error)
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-
-    try {
-      const result = await resetPassword(email)
-      
-      if (result.success) {
-        setResetEmailSent(true)
-      } else {
-        setError(result.error)
-      }
-    } catch (err) {
-      setError('An unexpected error occurred')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">

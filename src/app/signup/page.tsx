@@ -3,13 +3,10 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { signUpWithEmail } from '@/app/lib/auth'
-import { useRouter } from 'next/navigation'
-
 export default function SignupPage() {
   const [showVerificationMessage, setShowVerificationMessage] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -29,7 +26,7 @@ export default function SignupPage() {
       } else {
         setError(result.error)
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)

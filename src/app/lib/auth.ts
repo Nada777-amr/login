@@ -56,8 +56,8 @@ export const signUpWithEmail = async (
     await setDoc(doc(db, 'users', user.uid), userProfile);
 
     return { success: true, user };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
   }
 };
 
@@ -66,8 +66,8 @@ export const signInWithEmail = async (email: string, password: string) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { success: true, user: userCredential.user };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
   }
 };
 
@@ -97,8 +97,8 @@ export const signInWithGitHub = async () => {
     }
 
     return { success: true, user };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
   }
 };
 
@@ -128,8 +128,8 @@ export const signInWithGoogle = async () => {
     }
 
     return { success: true, user };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
   }
 };
 
@@ -138,8 +138,8 @@ export const resetPassword = async (email: string) => {
   try {
     await sendPasswordResetEmail(auth, email);
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
   }
 };
 
@@ -148,8 +148,8 @@ export const signOutUser = async () => {
   try {
     await signOut(auth);
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
   }
 };
 
