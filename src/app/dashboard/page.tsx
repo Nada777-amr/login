@@ -87,7 +87,7 @@ export default function DashboardPage() {
             
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
               <p className="text-blue-800 text-sm">
-                🎉 You're successfully authenticated! This is a protected dashboard page.
+                🎉 You&apos;re successfully authenticated! This is a protected dashboard page.
               </p>
             </div>
             

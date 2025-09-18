@@ -24,7 +24,7 @@ export default function SignupPage() {
       if (result.success) {
         setShowVerificationMessage(true)
       } else {
-        setError(result.error)
+        setError(result.error || 'Signup failed')
       }
     } catch {
       setError('An unexpected error occurred')

@@ -7,7 +7,6 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   GithubAuthProvider,
-  User,
   updateProfile,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -90,7 +89,7 @@ export const signInWithGitHub = async () => {
         provider: 'github',
         createdAt: new Date(),
         emailVerified: user.emailVerified,
-        photoURL: user.photoURL,
+        photoURL: user.photoURL || undefined,
       };
 
       await setDoc(doc(db, 'users', user.uid), userProfile);
@@ -121,7 +120,7 @@ export const signInWithGoogle = async () => {
         provider: 'google',
         createdAt: new Date(),
         emailVerified: user.emailVerified,
-        photoURL: user.photoURL,
+        photoURL: user.photoURL || undefined,
       };
 
       await setDoc(doc(db, 'users', user.uid), userProfile);

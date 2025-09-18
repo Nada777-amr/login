@@ -26,7 +26,7 @@ export default function LoginPage() {
       if (result.success) {
         router.push('/dashboard')
       } else {
-        setError(result.error)
+        setError(result.error || 'Login failed')
       }
     } catch {
       setError('An unexpected error occurred')
@@ -45,7 +45,7 @@ export default function LoginPage() {
       if (result.success) {
         router.push('/dashboard')
       } else {
-        setError(result.error)
+        setError(result.error || 'GitHub login failed')
       }
     } catch {
       setError('An unexpected error occurred')
@@ -149,7 +149,7 @@ export default function LoginPage() {
                           if (result.success) {
                             setResetEmailSent(true);
                           } else {
-                            setError(result.error);
+                            setError(result.error || 'Password reset failed');
                           }
                         });
                       } else {
