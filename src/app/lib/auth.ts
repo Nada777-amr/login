@@ -73,14 +73,19 @@ export const signInWithEmail = async (email: string, password: string) => {
 // Sign in with GitHub
 export const signInWithGitHub = async () => {
   try {
+    console.log('Creating GitHub provider...')
     const provider = new GithubAuthProvider();
+    console.log('Provider created, attempting popup...')
+    
     const userCredential = await signInWithPopup(auth, provider);
+    console.log('Popup successful, user:', userCredential.user)
     const user = userCredential.user;
 
     // Check if user profile exists in Firestore
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     
     if (!userDoc.exists()) {
+      console.log('Creating new user profile...')
       // Create user profile for new GitHub user
       const userProfile: UserProfile = {
         uid: user.uid,
@@ -93,10 +98,12 @@ export const signInWithGitHub = async () => {
       };
 
       await setDoc(doc(db, 'users', user.uid), userProfile);
+      console.log('User profile created')
     }
 
     return { success: true, user };
   } catch (error: unknown) {
+    console.error('GitHub auth error:', error)
     return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
   }
 };
