@@ -14,17 +14,26 @@ Before deploying to Vercel, you need to set up environment variables:
 
 1. Go to your Vercel project dashboard
 2. Navigate to Settings → Environment Variables
-3. Add the following variables:
+3. Add the following variables (copy values from your `.env.local`):
+
+**Required Environment Variables:**
 
 ```
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_API_KEY=your_actual_api_key_here
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_actual_project_id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_actual_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_actual_app_id
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_actual_measurement_id
 ```
+
+**Important:**
+
+- Use the **exact variable names** above
+- Copy the **actual values** from your Firebase console (not the placeholder text)
+- Set these for **Production**, **Preview**, and **Development** environments
+- Do **NOT** use Vercel secrets syntax (@secret_name) - just paste the actual values
 
 ### Firebase Setup for Production
 
@@ -84,10 +93,15 @@ service cloud.firestore {
 
 **Common Issues:**
 
-1. **Firebase errors:** Check environment variables
-2. **OAuth failures:** Verify redirect URLs
-3. **Build failures:** Run `npm run build` locally first
-4. **Type errors:** Run `npm run type-check`
+1. **"Environment Variable references Secret which does not exist"**
+   - **Solution**: Set environment variables directly in Vercel dashboard, not as secrets
+   - Go to Project Settings → Environment Variables
+   - Add each variable with its actual value (not @secret_name syntax)
+
+2. **Firebase errors:** Check environment variables are set correctly
+3. **OAuth failures:** Verify redirect URLs in Firebase and GitHub
+4. **Build failures:** Run `npm run build` locally first
+5. **Type errors:** Run `npm run type-check`
 
 ### Performance Monitoring
 
