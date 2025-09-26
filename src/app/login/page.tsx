@@ -40,15 +40,20 @@ export default function LoginPage() {
     setError('')
 
     try {
+      console.log('Starting GitHub login...')
       const result = await signInWithGitHub()
+      console.log('GitHub login result:', result)
       
       if (result.success) {
+        console.log('GitHub login successful, redirecting to dashboard...')
         router.push('/dashboard')
       } else {
+        console.log('GitHub login failed:', result.error)
         setError(result.error || 'GitHub login failed')
       }
-    } catch {
-      setError('An unexpected error occurred')
+    } catch (error) {
+      console.error('GitHub login error:', error)
+      setError('An unexpected error occurred. Please check your internet connection and try again.')
     } finally {
       setLoading(false)
     }
