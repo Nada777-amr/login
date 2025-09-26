@@ -7,14 +7,25 @@ import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyB82FcvM-paHfnX_7b4dmnYBvcG06RYntg",
-  authDomain: "login-e2288.firebaseapp.com",
-  projectId: "login-e2288",
-  storageBucket: "login-e2288.firebasestorage.app",
-  messagingSenderId: "1021650772463",
-  appId: "1:1021650772463:web:23b64050e3bd77d5b6561a",
-  measurementId: "G-Q12PYZYJGY"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
+
+// Validate Firebase configuration
+if (
+  !firebaseConfig.apiKey ||
+  !firebaseConfig.authDomain ||
+  !firebaseConfig.projectId
+) {
+  throw new Error(
+    "Missing required Firebase configuration. Please check your environment variables."
+  );
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -25,6 +36,7 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 // Initialize Analytics only on client side
-export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+export const analytics =
+  typeof window !== "undefined" ? getAnalytics(app) : null;
 
 export default app;

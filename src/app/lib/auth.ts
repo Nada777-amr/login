@@ -9,10 +9,10 @@ import {
   GithubAuthProvider,
   fetchSignInMethodsForEmail,
   updateProfile,
-} from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { auth, db, storage } from './firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+} from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { auth, db, storage } from "./firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // User profile interface
 export interface UserProfile {
@@ -33,7 +33,11 @@ export const signUpWithEmail = async (
 ) => {
   try {
     // Create user account
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
     const user = userCredential.user;
 
     // Update display name
@@ -49,120 +53,158 @@ export const signUpWithEmail = async (
       uid: user.uid,
       username,
       email: user.email!,
-      provider: 'email',
+      provider: "email",
       createdAt: new Date(),
       emailVerified: user.emailVerified,
     };
 
-    await setDoc(doc(db, 'users', user.uid), userProfile);
+    await setDoc(doc(db, "users", user.uid), userProfile);
 
     return { success: true, user };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
+    };
   }
 };
 
 // Sign in with email and password
 export const signInWithEmail = async (email: string, password: string) => {
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
     return { success: true, user: userCredential.user };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
+    };
   }
 };
 
 // Sign in with GitHub
 export const signInWithGitHub = async () => {
   try {
-    console.log('Creating GitHub provider...')
+    console.log("Creating GitHub provider...");
     const provider = new GithubAuthProvider();
-    
+
     // Add scopes for better GitHub integration
-    provider.addScope('user:email');
-    provider.addScope('read:user');
-    
-    console.log('Provider created, attempting popup...')
-    
+    provider.addScope("user:email");
+    provider.addScope("read:user");
+
+    console.log("Provider created, attempting popup...");
+
     const userCredential = await signInWithPopup(auth, provider);
-    console.log('Popup successful, user:', userCredential.user)
+    console.log("Popup successful, user:", userCredential.user);
     const user = userCredential.user;
 
     // Check if user profile exists in Firestore
-    console.log('Checking if user profile exists for UID:', user.uid);
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    console.log('User document exists:', userDoc.exists());
-    
+    console.log("Checking if user profile exists for UID:", user.uid);
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    console.log("User document exists:", userDoc.exists());
+
     if (!userDoc.exists()) {
-      console.log('Creating new user profile...')
+      console.log("Creating new user profile...");
       // Create user profile for new GitHub user
       const userProfile: UserProfile = {
         uid: user.uid,
-        username: user.displayName || user.email!.split('@')[0],
+        username: user.displayName || user.email!.split("@")[0],
         email: user.email!,
-        provider: 'github',
+        provider: "github",
         createdAt: new Date(),
         emailVerified: user.emailVerified,
         photoURL: user.photoURL || undefined,
       };
 
-      console.log('Saving user profile:', userProfile);
-      await setDoc(doc(db, 'users', user.uid), userProfile);
-      console.log('User profile created successfully')
+      console.log("Saving user profile:", userProfile);
+      await setDoc(doc(db, "users", user.uid), userProfile);
+      console.log("User profile created successfully");
     } else {
-      console.log('User profile already exists');
+      console.log("User profile already exists");
     }
 
-    console.log('GitHub login completed successfully');
+    console.log("GitHub login completed successfully");
     return { success: true, user };
   } catch (error: unknown) {
-    console.error('GitHub auth error:', error)
-    
+    console.error("GitHub auth error:", error);
+
     // Handle specific Firebase auth errors
-    if (typeof error === 'object' && error !== null) {
-      const anyError = error as any;
-      const code: string | undefined = anyError.code;
+    if (typeof error === "object" && error !== null) {
+      const firebaseError = error as {
+        code?: string;
+        customData?: { email?: string };
+      };
+      const code: string | undefined = firebaseError.code;
       // If user already has an account with the same email but different provider
-      if (code === 'auth/account-exists-with-different-credential') {
+      if (code === "auth/account-exists-with-different-credential") {
         try {
-          const email: string | undefined = anyError.customData?.email;
-          let methodHint = '';
+          const email: string | undefined = firebaseError.customData?.email;
+          let methodHint = "";
           if (email) {
             const methods = await fetchSignInMethodsForEmail(auth, email);
             if (methods && methods.length > 0) {
               const primary = methods[0];
               // Map Firebase method IDs to readable provider names
               const providerMap: Record<string, string> = {
-                'password': 'Email and password',
-                'google.com': 'Google',
-                'github.com': 'GitHub',
-                'facebook.com': 'Facebook',
-                'twitter.com': 'Twitter',
-                'apple.com': 'Apple',
+                password: "Email and password",
+                "google.com": "Google",
+                "github.com": "GitHub",
+                "facebook.com": "Facebook",
+                "twitter.com": "Twitter",
+                "apple.com": "Apple",
               };
               methodHint = providerMap[primary] || primary;
             }
           }
-          const msgBase = 'An account already exists with the same email but using a different sign-in method.';
-          const msgHint = methodHint ? ` Please sign in with ${methodHint}${email ? ` (${email})` : ''} first, then link GitHub from your account settings.` : ' Please sign in with your original method first, then link GitHub from your account settings.';
+          const msgBase =
+            "An account already exists with the same email but using a different sign-in method.";
+          const msgHint = methodHint
+            ? ` Please sign in with ${methodHint}${
+                email ? ` (${email})` : ""
+              } first, then link GitHub from your account settings.`
+            : " Please sign in with your original method first, then link GitHub from your account settings.";
           return { success: false, error: msgBase + msgHint };
-        } catch (fetchErr) {
-          return { success: false, error: 'An account exists with this email using a different method. Please sign in with your original method first, then link GitHub from your account settings.' };
+        } catch {
+          return {
+            success: false,
+            error:
+              "An account exists with this email using a different method. Please sign in with your original method first, then link GitHub from your account settings.",
+          };
         }
       }
     }
 
     if (error instanceof Error) {
-      if (error.message.includes('popup-closed-by-user')) {
-        return { success: false, error: 'Sign-in was cancelled. Please try again.' };
-      } else if (error.message.includes('auth/popup-blocked')) {
-        return { success: false, error: 'Popup was blocked by your browser. Please allow popups for this site.' };
-      } else if (error.message.includes('auth/cancelled-popup-request')) {
-        return { success: false, error: 'Sign-in was cancelled. Please try again.' };
+      if (error.message.includes("popup-closed-by-user")) {
+        return {
+          success: false,
+          error: "Sign-in was cancelled. Please try again.",
+        };
+      } else if (error.message.includes("auth/popup-blocked")) {
+        return {
+          success: false,
+          error:
+            "Popup was blocked by your browser. Please allow popups for this site.",
+        };
+      } else if (error.message.includes("auth/cancelled-popup-request")) {
+        return {
+          success: false,
+          error: "Sign-in was cancelled. Please try again.",
+        };
       }
     }
-    
-    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
+
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
+    };
   }
 };
 
@@ -174,58 +216,74 @@ export const signInWithGoogle = async () => {
     const user = userCredential.user;
 
     // Check if user profile exists in Firestore
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+
     if (!userDoc.exists()) {
       // Create user profile for new Google user
       const userProfile: UserProfile = {
         uid: user.uid,
-        username: user.displayName || user.email!.split('@')[0],
+        username: user.displayName || user.email!.split("@")[0],
         email: user.email!,
-        provider: 'google',
+        provider: "google",
         createdAt: new Date(),
         emailVerified: user.emailVerified,
         photoURL: user.photoURL || undefined,
       };
 
-      await setDoc(doc(db, 'users', user.uid), userProfile);
+      await setDoc(doc(db, "users", user.uid), userProfile);
     }
 
     return { success: true, user };
   } catch (error: unknown) {
     // Handle account-exists-with-different-credential similarly for Google
-    if (typeof error === 'object' && error !== null) {
-      const anyError = error as any;
-      const code: string | undefined = anyError.code;
-      if (code === 'auth/account-exists-with-different-credential') {
+    if (typeof error === "object" && error !== null) {
+      const firebaseError = error as {
+        code?: string;
+        customData?: { email?: string };
+      };
+      const code: string | undefined = firebaseError.code;
+      if (code === "auth/account-exists-with-different-credential") {
         try {
-          const email: string | undefined = anyError.customData?.email;
-          let methodHint = '';
+          const email: string | undefined = firebaseError.customData?.email;
+          let methodHint = "";
           if (email) {
             const methods = await fetchSignInMethodsForEmail(auth, email);
             if (methods && methods.length > 0) {
               const primary = methods[0];
               const providerMap: Record<string, string> = {
-                'password': 'Email and password',
-                'google.com': 'Google',
-                'github.com': 'GitHub',
-                'facebook.com': 'Facebook',
-                'twitter.com': 'Twitter',
-                'apple.com': 'Apple',
+                password: "Email and password",
+                "google.com": "Google",
+                "github.com": "GitHub",
+                "facebook.com": "Facebook",
+                "twitter.com": "Twitter",
+                "apple.com": "Apple",
               };
               methodHint = providerMap[primary] || primary;
             }
           }
-          const msgBase = 'An account already exists with the same email but using a different sign-in method.';
-          const msgHint = methodHint ? ` Please sign in with ${methodHint}${email ? ` (${email})` : ''} first, then link Google from your account settings.` : ' Please sign in with your original method first, then link Google from your account settings.';
+          const msgBase =
+            "An account already exists with the same email but using a different sign-in method.";
+          const msgHint = methodHint
+            ? ` Please sign in with ${methodHint}${
+                email ? ` (${email})` : ""
+              } first, then link Google from your account settings.`
+            : " Please sign in with your original method first, then link Google from your account settings.";
           return { success: false, error: msgBase + msgHint };
-        } catch (fetchErr) {
-          return { success: false, error: 'An account exists with this email using a different method. Please sign in with your original method first, then link Google from your account settings.' };
+        } catch {
+          return {
+            success: false,
+            error:
+              "An account exists with this email using a different method. Please sign in with your original method first, then link Google from your account settings.",
+          };
         }
       }
     }
 
-    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
+    };
   }
 };
 
@@ -235,7 +293,11 @@ export const resetPassword = async (email: string) => {
     await sendPasswordResetEmail(auth, email);
     return { success: true };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
+    };
   }
 };
 
@@ -245,20 +307,26 @@ export const signOutUser = async () => {
     await signOut(auth);
     return { success: true };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : 'An unknown error occurred' };
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
+    };
   }
 };
 
 // Get user profile from Firestore
-export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
+export const getUserProfile = async (
+  uid: string
+): Promise<UserProfile | null> => {
   try {
-    const userDoc = await getDoc(doc(db, 'users', uid));
+    const userDoc = await getDoc(doc(db, "users", uid));
     if (userDoc.exists()) {
       return userDoc.data() as UserProfile;
     }
     return null;
   } catch (error) {
-    console.error('Error getting user profile:', error);
+    console.error("Error getting user profile:", error);
     return null;
   }
 };
@@ -284,16 +352,23 @@ export const updateUserProfileData = async (
       updates.photoURL = newPhotoURL;
     }
 
-    if (typeof input.username === 'string' && input.username.trim().length > 0) {
+    if (
+      typeof input.username === "string" &&
+      input.username.trim().length > 0
+    ) {
       updates.username = input.username.trim();
     }
 
     if (Object.keys(updates).length > 0) {
       // Update Firestore doc
-      const userDocRef = doc(db, 'users', uid);
+      const userDocRef = doc(db, "users", uid);
       const existing = await getDoc(userDocRef);
       if (existing.exists()) {
-        await setDoc(userDocRef, { ...existing.data(), ...updates }, { merge: true });
+        await setDoc(
+          userDocRef,
+          { ...existing.data(), ...updates },
+          { merge: true }
+        );
       }
 
       // Also update Firebase Auth profile if current user matches
@@ -307,7 +382,11 @@ export const updateUserProfileData = async (
 
     return { success: true, photoURL: newPhotoURL };
   } catch (error) {
-    console.error('Error updating user profile:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to update profile' };
+    console.error("Error updating user profile:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to update profile",
+    };
   }
 };
