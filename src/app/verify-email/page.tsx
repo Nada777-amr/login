@@ -1,30 +1,30 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useAuth } from '@/app/contexts/AuthContext'
-import { signOutUser } from '@/app/lib/auth'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
-import Image from 'next/image'
+import Link from "next/link";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { signOutUser } from "@/app/lib/auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import Image from "next/image";
 
 export default function DashboardPage() {
-  const { user, userProfile, loading } = useAuth()
-  const router = useRouter()
+  const { user, userProfile, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login')
+      router.push("/login");
     }
-  }, [user, loading, router])
+  }, [user, loading, router]);
 
   const handleLogout = async () => {
     try {
-      await signOutUser()
-      router.push('/')
+      await signOutUser();
+      router.push("/");
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error("Logout error:", error);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -34,15 +34,15 @@ export default function DashboardPage() {
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return null // Will redirect to login
+    return null; // Will redirect to login
   }
 
-  const displayName = userProfile?.username || user.displayName || user.email
-  const profilePhotoURL = userProfile?.photoURL || user.photoURL
+  const displayName = userProfile?.username || user.displayName || user.email;
+  const profilePhotoURL = userProfile?.photoURL || user.photoURL;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -59,15 +59,18 @@ export default function DashboardPage() {
             <Link href="/signup" className="text-blue-600 hover:text-blue-800">
               Signup
             </Link>
-            <Link href="/dashboard" className="text-blue-600 hover:text-blue-800 font-semibold">
+            <Link
+              href="/dashboard"
+              className="text-blue-600 hover:text-blue-800 font-semibold"
+            >
               Dashboard
             </Link>
           </div>
-          
+
           {/* User Menu */}
           <div className="flex items-center space-x-4">
-            <Link 
-              href="/profile" 
+            <Link
+              href="/profile"
               className="flex items-center space-x-2 text-gray-700 hover:text-blue-600"
             >
               {profilePhotoURL ? (
@@ -99,7 +102,7 @@ export default function DashboardPage() {
               Dashboard
             </h1>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Profile Card */}
             <div className="lg:col-span-1">
@@ -122,25 +125,29 @@ export default function DashboardPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   <h2 className="text-xl font-bold text-gray-900 mb-2">
                     {displayName}
                   </h2>
-                  
+
                   <div className="space-y-2 text-sm text-gray-600">
                     <p>{user.email}</p>
-                    <p className="capitalize">{userProfile?.provider || 'email'} Account</p>
+                    <p className="capitalize">
+                      {userProfile?.provider || "email"} Account
+                    </p>
                     <div className="flex items-center justify-center">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.emailVerified 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {user.emailVerified ? 'Verified' : 'Unverified'}
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.emailVerified
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {user.emailVerified ? "Verified" : "Unverified"}
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="mt-4">
                     <Link
                       href="/profile"
@@ -156,27 +163,44 @@ export default function DashboardPage() {
             {/* Main Content */}
             <div className="lg:col-span-2">
               <div className="bg-white shadow-lg rounded-lg p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-6">Welcome Back!</h3>
-                
+                <h3 className="text-lg font-medium text-gray-900 mb-6">
+                  Welcome Back!
+                </h3>
+
                 <div className="space-y-4">
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
                     <p className="text-blue-800 text-sm">
-                      🎉 You're successfully authenticated! This is your protected dashboard.
+                      🎉 You&apos;re successfully authenticated! This is your
+                      protected dashboard.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="p-4 border border-gray-200 rounded-lg">
-                      <h4 className="font-medium text-gray-900 mb-2">Account Info</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        Account Info
+                      </h4>
                       <ul className="text-sm text-gray-600 space-y-1">
-                        <li>Provider: {userProfile?.provider || 'email'}</li>
-                        <li>Email: {user.emailVerified ? 'Verified' : 'Not verified'}</li>
-                        <li>Created: {userProfile?.createdAt ? new Date(userProfile.createdAt).toLocaleDateString() : 'N/A'}</li>
+                        <li>Provider: {userProfile?.provider || "email"}</li>
+                        <li>
+                          Email:{" "}
+                          {user.emailVerified ? "Verified" : "Not verified"}
+                        </li>
+                        <li>
+                          Created:{" "}
+                          {userProfile?.createdAt
+                            ? new Date(
+                                userProfile.createdAt
+                              ).toLocaleDateString()
+                            : "N/A"}
+                        </li>
                       </ul>
                     </div>
 
                     <div className="p-4 border border-gray-200 rounded-lg">
-                      <h4 className="font-medium text-gray-900 mb-2">Quick Actions</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        Quick Actions
+                      </h4>
                       <div className="space-y-2">
                         <Link
                           href="/profile"
@@ -195,7 +219,9 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
-                    <h4 className="font-medium text-gray-900 mb-2">Available Features</h4>
+                    <h4 className="font-medium text-gray-900 mb-2">
+                      Available Features
+                    </h4>
                     <ul className="text-sm text-gray-600 space-y-1">
                       <li>✓ Profile management</li>
                       <li>✓ Photo upload</li>
@@ -211,5 +237,5 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

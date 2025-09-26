@@ -1,16 +1,15 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function middleware() {
   // Add security headers
-  const response = NextResponse.next()
-  
+  const response = NextResponse.next();
+
   // Add security headers
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'origin-when-cross-origin')
-  
-  return response
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "origin-when-cross-origin");
+
+  return response;
 }
 
 export const config = {
@@ -22,6 +21,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
-}
+};

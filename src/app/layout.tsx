@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./contexts/AuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +16,22 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "MVP Authentication System",
-  description: "A simple, production-ready authentication system built with Next.js and Firebase",
+  description:
+    "A simple, production-ready authentication system built with Next.js and Firebase",
+  keywords: ["authentication", "nextjs", "firebase", "login", "signup"],
+  authors: [{ name: "MVP Auth Team" }],
+  creator: "MVP Auth",
+  publisher: "MVP Auth",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    type: "website",
+    title: "MVP Authentication System",
+    description:
+      "A simple, production-ready authentication system built with Next.js and Firebase",
+  },
 };
 
 export default function RootLayout({
@@ -28,9 +44,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>{children}</AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
