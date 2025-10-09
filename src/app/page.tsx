@@ -15,9 +15,6 @@ export default function Home() {
           <Link href="/signup" className="text-blue-600 hover:text-blue-800">
             Signup
           </Link>
-          <Link href="/dashboard" className="text-blue-600 hover:text-blue-800">
-            Dashboard
-          </Link>
         </div>
       </nav>
 
@@ -77,7 +74,7 @@ export default function Home() {
               </div>
               <div className="flex items-center">
                 <span className="text-green-500 mr-2">✓</span>
-                Protected dashboard
+                Protected profile & dashboard
               </div>
             </div>
           </div>

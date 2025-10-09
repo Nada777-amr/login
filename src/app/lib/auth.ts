@@ -13,6 +13,7 @@ import {
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db, storage } from "./firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storeFirebaseToken, storeGitHubToken, createTokenData } from './tokenManager';
 
 // User profile interface
 export interface UserProfile {
@@ -60,7 +61,10 @@ export const signUpWithEmail = async (
 
     await setDoc(doc(db, "users", user.uid), userProfile);
 
-    return { success: true, user };
+    // Sign out the user immediately after signup - they need to verify email first
+    await signOut(auth);
+
+    return { success: true, user: null }; // Return null user since they're signed out
   } catch (error: unknown) {
     return {
       success: false,
@@ -78,6 +82,20 @@ export const signInWithEmail = async (email: string, password: string) => {
       email,
       password
     );
+    
+    // Check if email is verified for email/password users
+    if (!userCredential.user.emailVerified) {
+      // Sign out the unverified user immediately
+      await signOut(auth);
+      return {
+        success: false,
+        error: "Wrong credentials or unverified account. Please check your email and verify your account before logging in."
+      };
+    }
+    
+    // Store Firebase token with expiration
+    await storeFirebaseToken();
+    
     return { success: true, user: userCredential.user };
   } catch (error: unknown) {
     return {
@@ -103,6 +121,13 @@ export const signInWithGitHub = async () => {
     const userCredential = await signInWithPopup(auth, provider);
     console.log("Popup successful, user:", userCredential.user);
     const user = userCredential.user;
+    
+    // Extract GitHub access token from credential if available
+    const credential = GithubAuthProvider.credentialFromResult(userCredential);
+    if (credential && credential.accessToken) {
+      console.log('Storing GitHub access token...');
+      storeGitHubToken(credential.accessToken);
+    }
 
     // Check if user profile exists in Firestore
     console.log("Checking if user profile exists for UID:", user.uid);
@@ -111,14 +136,14 @@ export const signInWithGitHub = async () => {
 
     if (!userDoc.exists()) {
       console.log("Creating new user profile...");
-      // Create user profile for new GitHub user
+      // Create user profile for new GitHub user - GitHub users are automatically verified
       const userProfile: UserProfile = {
         uid: user.uid,
         username: user.displayName || user.email!.split("@")[0],
         email: user.email!,
         provider: "github",
         createdAt: new Date(),
-        emailVerified: user.emailVerified,
+        emailVerified: true, // GitHub users are automatically verified
         photoURL: user.photoURL || undefined,
       };
 
@@ -127,9 +152,21 @@ export const signInWithGitHub = async () => {
       console.log("User profile created successfully");
     } else {
       console.log("User profile already exists");
+      // Update verification status for existing GitHub users
+      const existingProfile = userDoc.data() as UserProfile;
+      if (!existingProfile.emailVerified) {
+        await setDoc(doc(db, "users", user.uid), {
+          ...existingProfile,
+          emailVerified: true
+        }, { merge: true });
+      }
     }
 
     console.log("GitHub login completed successfully");
+    
+    // Store Firebase token with expiration
+    await storeFirebaseToken();
+    
     return { success: true, user };
   } catch (error: unknown) {
     console.error("GitHub auth error:", error);
@@ -219,19 +256,31 @@ export const signInWithGoogle = async () => {
     const userDoc = await getDoc(doc(db, "users", user.uid));
 
     if (!userDoc.exists()) {
-      // Create user profile for new Google user
+      // Create user profile for new Google user - Google users are automatically verified
       const userProfile: UserProfile = {
         uid: user.uid,
         username: user.displayName || user.email!.split("@")[0],
         email: user.email!,
         provider: "google",
         createdAt: new Date(),
-        emailVerified: user.emailVerified,
+        emailVerified: true, // Google users are automatically verified
         photoURL: user.photoURL || undefined,
       };
 
       await setDoc(doc(db, "users", user.uid), userProfile);
+    } else {
+      // Update verification status for existing Google users
+      const existingProfile = (await getDoc(doc(db, "users", user.uid))).data() as UserProfile;
+      if (!existingProfile.emailVerified) {
+        await setDoc(doc(db, "users", user.uid), {
+          ...existingProfile,
+          emailVerified: true
+        }, { merge: true });
+      }
     }
+
+    // Store Firebase token with expiration
+    await storeFirebaseToken();
 
     return { success: true, user };
   } catch (error: unknown) {
@@ -304,6 +353,10 @@ export const resetPassword = async (email: string) => {
 // Sign out
 export const signOutUser = async () => {
   try {
+    // Clear stored tokens before signing out
+    const { clearStoredTokens } = await import('./tokenManager');
+    clearStoredTokens();
+    
     await signOut(auth);
     return { success: true };
   } catch (error: unknown) {

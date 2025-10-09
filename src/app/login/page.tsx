@@ -14,13 +14,38 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [verificationRequired, setVerificationRequired] = useState(false);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+
+  // Check for email verification success on page load
+  useEffect(() => {
+    const emailVerified = localStorage.getItem('email_verified');
+    if (emailVerified === 'true') {
+      setVerificationSuccess(true);
+      localStorage.removeItem('email_verified');
+      // Hide the success message after 10 seconds
+      setTimeout(() => {
+        setVerificationSuccess(false);
+      }, 10000);
+    }
+    
+    const needsVerification = localStorage.getItem('verification_required');
+    if (needsVerification === 'true') {
+      setVerificationRequired(true);
+      localStorage.removeItem('verification_required');
+      // Hide the message after 15 seconds
+      setTimeout(() => {
+        setVerificationRequired(false);
+      }, 15000);
+    }
+  }, []);
 
   // Redirect if already authenticated
   useEffect(() => {
     if (!authLoading && user) {
-      router.push("/dashboard");
+      router.push("/profile");
     }
   }, [user, authLoading, router]);
 
@@ -53,7 +78,7 @@ export default function LoginPage() {
       if (result.success) {
         // Don't redirect manually - let the useEffect handle it when auth state changes
         console.log(
-          "Email login successful, auth state will trigger redirect..."
+          "Email login successful, auth state will trigger redirect to profile..."
         );
       } else {
         setError(result.error || "Login failed");
@@ -75,10 +100,11 @@ export default function LoginPage() {
       console.log("GitHub login result:", result);
 
       if (result.success) {
+        // GitHub users are automatically verified, redirect to profile
         console.log(
-          "GitHub login successful, auth state will trigger redirect..."
+          "GitHub login successful, redirecting to profile..."
         );
-        // Don't redirect manually - let the useEffect handle it when auth state changes
+        router.push('/profile');
       } else {
         console.log("GitHub login failed:", result.error);
         setError(result.error || "GitHub login failed");
@@ -110,9 +136,6 @@ export default function LoginPage() {
           <Link href="/signup" className="text-blue-600 hover:text-blue-800">
             Signup
           </Link>
-          <Link href="/dashboard" className="text-blue-600 hover:text-blue-800">
-            Dashboard
-          </Link>
         </div>
       </nav>
 
@@ -124,6 +147,39 @@ export default function LoginPage() {
               Login Page
             </h1>
           </div>
+
+          {/* Email Verification Success Message */}
+          {verificationSuccess && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-green-800 font-semibold">
+                  Your email has been verified. You can now log in.
+                </p>
+              </div>
+            </div>
+          )}
+          
+          {/* Email Verification Required Message */}
+          {verificationRequired && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                  <p className="text-yellow-800 font-semibold">
+                    Email verification required
+                  </p>
+                  <p className="text-yellow-700 text-sm mt-1">
+                    Please check your email and click the verification link before logging in.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {resetEmailSent ? (
             <div className="text-center space-y-4">
