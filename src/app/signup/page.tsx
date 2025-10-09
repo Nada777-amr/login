@@ -45,7 +45,8 @@ export default function SignupPage() {
       console.log('GitHub signup result:', result)
       
       if (result.success) {
-        router.push('/dashboard')
+        // GitHub users are automatically verified, redirect to profile
+        router.push('/profile')
       } else {
         setError(result.error || 'GitHub signup failed')
       }
@@ -71,9 +72,6 @@ export default function SignupPage() {
           <Link href="/signup" className="text-blue-600 hover:text-blue-800 font-semibold">
             Signup
           </Link>
-          <Link href="/dashboard" className="text-blue-600 hover:text-blue-800">
-            Dashboard
-          </Link>
         </div>
       </nav>
 
@@ -88,12 +86,12 @@ export default function SignupPage() {
           
           {showVerificationMessage ? (
             <div className="text-center space-y-4">
-              <div className="p-4 bg-green-50 border border-green-200 rounded-md">
-                <p className="text-green-800">
-                  Account created successfully! Please check your email for verification.
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-blue-800 font-semibold">
+                  Check your email (and your spam folder) for a verification link.
                 </p>
-                <p className="text-green-700 text-sm mt-2">
-                  Click the verification link in your email to complete the signup process.
+                <p className="text-blue-700 text-sm mt-2">
+                  You must verify your email before you can log in. After clicking the verification link, return here to log in.
                 </p>
               </div>
               <div className="space-y-2">
