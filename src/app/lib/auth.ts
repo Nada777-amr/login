@@ -1,3 +1,5 @@
+'use client';
+
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -23,6 +25,7 @@ export interface UserProfile {
   createdAt: Date;
   emailVerified: boolean;
   photoURL?: string;
+  role?: "user" | "admin";
 }
 
 // Sign up with email and password
@@ -32,7 +35,6 @@ export const signUpWithEmail = async (
   username: string
 ) => {
   try {
-    // Create user account
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
@@ -40,15 +42,13 @@ export const signUpWithEmail = async (
     );
     const user = userCredential.user;
 
-    // Update display name
     await updateProfile(user, {
       displayName: username,
     });
 
-    // Send email verification
     await sendEmailVerification(user);
 
-    // Save user profile to Firestore
+    // 👇 Default role set to "user"
     const userProfile: UserProfile = {
       uid: user.uid,
       username,
@@ -56,6 +56,7 @@ export const signUpWithEmail = async (
       provider: "email",
       createdAt: new Date(),
       emailVerified: user.emailVerified,
+      role: "user",
     };
 
     await setDoc(doc(db, "users", user.uid), userProfile);
@@ -91,27 +92,15 @@ export const signInWithEmail = async (email: string, password: string) => {
 // Sign in with GitHub
 export const signInWithGitHub = async () => {
   try {
-    console.log("Creating GitHub provider...");
     const provider = new GithubAuthProvider();
-
-    // Add scopes for better GitHub integration
     provider.addScope("user:email");
     provider.addScope("read:user");
 
-    console.log("Provider created, attempting popup...");
-
     const userCredential = await signInWithPopup(auth, provider);
-    console.log("Popup successful, user:", userCredential.user);
     const user = userCredential.user;
 
-    // Check if user profile exists in Firestore
-    console.log("Checking if user profile exists for UID:", user.uid);
     const userDoc = await getDoc(doc(db, "users", user.uid));
-    console.log("User document exists:", userDoc.exists());
-
     if (!userDoc.exists()) {
-      console.log("Creating new user profile...");
-      // Create user profile for new GitHub user
       const userProfile: UserProfile = {
         uid: user.uid,
         username: user.displayName || user.email!.split("@")[0],
@@ -120,86 +109,15 @@ export const signInWithGitHub = async () => {
         createdAt: new Date(),
         emailVerified: user.emailVerified,
         photoURL: user.photoURL || undefined,
+        role: "user", // default role
       };
 
-      console.log("Saving user profile:", userProfile);
       await setDoc(doc(db, "users", user.uid), userProfile);
-      console.log("User profile created successfully");
-    } else {
-      console.log("User profile already exists");
     }
 
-    console.log("GitHub login completed successfully");
     return { success: true, user };
   } catch (error: unknown) {
-    console.error("GitHub auth error:", error);
-
-    // Handle specific Firebase auth errors
-    if (typeof error === "object" && error !== null) {
-      const firebaseError = error as {
-        code?: string;
-        customData?: { email?: string };
-      };
-      const code: string | undefined = firebaseError.code;
-      // If user already has an account with the same email but different provider
-      if (code === "auth/account-exists-with-different-credential") {
-        try {
-          const email: string | undefined = firebaseError.customData?.email;
-          let methodHint = "";
-          if (email) {
-            const methods = await fetchSignInMethodsForEmail(auth, email);
-            if (methods && methods.length > 0) {
-              const primary = methods[0];
-              // Map Firebase method IDs to readable provider names
-              const providerMap: Record<string, string> = {
-                password: "Email and password",
-                "google.com": "Google",
-                "github.com": "GitHub",
-                "facebook.com": "Facebook",
-                "twitter.com": "Twitter",
-                "apple.com": "Apple",
-              };
-              methodHint = providerMap[primary] || primary;
-            }
-          }
-          const msgBase =
-            "An account already exists with the same email but using a different sign-in method.";
-          const msgHint = methodHint
-            ? ` Please sign in with ${methodHint}${
-                email ? ` (${email})` : ""
-              } first, then link GitHub from your account settings.`
-            : " Please sign in with your original method first, then link GitHub from your account settings.";
-          return { success: false, error: msgBase + msgHint };
-        } catch {
-          return {
-            success: false,
-            error:
-              "An account exists with this email using a different method. Please sign in with your original method first, then link GitHub from your account settings.",
-          };
-        }
-      }
-    }
-
-    if (error instanceof Error) {
-      if (error.message.includes("popup-closed-by-user")) {
-        return {
-          success: false,
-          error: "Sign-in was cancelled. Please try again.",
-        };
-      } else if (error.message.includes("auth/popup-blocked")) {
-        return {
-          success: false,
-          error:
-            "Popup was blocked by your browser. Please allow popups for this site.",
-        };
-      } else if (error.message.includes("auth/cancelled-popup-request")) {
-        return {
-          success: false,
-          error: "Sign-in was cancelled. Please try again.",
-        };
-      }
-    }
-
+    console.error("GitHub sign-in error:", error);
     return {
       success: false,
       error:
@@ -215,11 +133,8 @@ export const signInWithGoogle = async () => {
     const userCredential = await signInWithPopup(auth, provider);
     const user = userCredential.user;
 
-    // Check if user profile exists in Firestore
     const userDoc = await getDoc(doc(db, "users", user.uid));
-
     if (!userDoc.exists()) {
-      // Create user profile for new Google user
       const userProfile: UserProfile = {
         uid: user.uid,
         username: user.displayName || user.email!.split("@")[0],
@@ -228,6 +143,7 @@ export const signInWithGoogle = async () => {
         createdAt: new Date(),
         emailVerified: user.emailVerified,
         photoURL: user.photoURL || undefined,
+        role: "user", //  default role
       };
 
       await setDoc(doc(db, "users", user.uid), userProfile);
@@ -235,50 +151,7 @@ export const signInWithGoogle = async () => {
 
     return { success: true, user };
   } catch (error: unknown) {
-    // Handle account-exists-with-different-credential similarly for Google
-    if (typeof error === "object" && error !== null) {
-      const firebaseError = error as {
-        code?: string;
-        customData?: { email?: string };
-      };
-      const code: string | undefined = firebaseError.code;
-      if (code === "auth/account-exists-with-different-credential") {
-        try {
-          const email: string | undefined = firebaseError.customData?.email;
-          let methodHint = "";
-          if (email) {
-            const methods = await fetchSignInMethodsForEmail(auth, email);
-            if (methods && methods.length > 0) {
-              const primary = methods[0];
-              const providerMap: Record<string, string> = {
-                password: "Email and password",
-                "google.com": "Google",
-                "github.com": "GitHub",
-                "facebook.com": "Facebook",
-                "twitter.com": "Twitter",
-                "apple.com": "Apple",
-              };
-              methodHint = providerMap[primary] || primary;
-            }
-          }
-          const msgBase =
-            "An account already exists with the same email but using a different sign-in method.";
-          const msgHint = methodHint
-            ? ` Please sign in with ${methodHint}${
-                email ? ` (${email})` : ""
-              } first, then link Google from your account settings.`
-            : " Please sign in with your original method first, then link Google from your account settings.";
-          return { success: false, error: msgBase + msgHint };
-        } catch {
-          return {
-            success: false,
-            error:
-              "An account exists with this email using a different method. Please sign in with your original method first, then link Google from your account settings.",
-          };
-        }
-      }
-    }
-
+    console.error("Google sign-in error:", error);
     return {
       success: false,
       error:
@@ -360,7 +233,6 @@ export const updateUserProfileData = async (
     }
 
     if (Object.keys(updates).length > 0) {
-      // Update Firestore doc
       const userDocRef = doc(db, "users", uid);
       const existing = await getDoc(userDocRef);
       if (existing.exists()) {
@@ -371,7 +243,6 @@ export const updateUserProfileData = async (
         );
       }
 
-      // Also update Firebase Auth profile if current user matches
       if (auth.currentUser && auth.currentUser.uid === uid) {
         await updateProfile(auth.currentUser, {
           displayName: updates.username,
