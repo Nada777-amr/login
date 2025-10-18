@@ -5,6 +5,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
+import TokenExpirationWarning from "./components/TokenExpirationWarning";
+import TokenMonitoringInitializer from "./components/TokenMonitoringInitializer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,7 +49,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ErrorBoundary>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <TokenMonitoringInitializer />
+            {children}
+            <TokenExpirationWarning warningThresholdMinutes={60} />
+          </AuthProvider>
         </ErrorBoundary>
       </body>
     </html>
