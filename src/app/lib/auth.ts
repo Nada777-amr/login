@@ -5,7 +5,6 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendEmailVerification,
-  sendPasswordResetEmail,
   signInWithPopup,
   GoogleAuthProvider,
   GithubAuthProvider,
@@ -84,21 +83,39 @@ export const signInWithEmail = async (email: string, password: string) => {
       password
     );
     
+    console.log('🔐 Login attempt:', {
+      email: userCredential.user.email,
+      emailVerified: userCredential.user.emailVerified,
+      uid: userCredential.user.uid
+    });
+    
     // Check if email is verified for email/password users
     if (!userCredential.user.emailVerified) {
-      // Sign out the unverified user immediately
+      // Sign out the unverified user immediately BEFORE any state propagates
+      console.log('❌ Email not verified - signing out user');
       await signOut(auth);
       return {
         success: false,
-        error: "Wrong credentials or unverified account. Please check your email and verify your account before logging in."
+        needsVerification: true,
+        error: "Please verify your email before logging in. Check your inbox for the verification link."
       };
     }
+    
+    console.log('✅ Email verified - login successful');
     
     // Store Firebase token with expiration
     await storeFirebaseToken();
     
     return { success: true, user: userCredential.user };
   } catch (error: unknown) {
+    // Sign out on any error to ensure clean state
+    console.error('❌ Login error:', error);
+    try {
+      await signOut(auth);
+    } catch (signOutError) {
+      console.error('Error signing out after failed login:', signOutError);
+    }
+    
     return {
       success: false,
       error:
@@ -213,20 +230,6 @@ export const signInWithGoogle = async () => {
     return { success: true, user };
   } catch (error: unknown) {
     console.error("Google sign-in error:", error);
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    };
-  }
-};
-
-// Send password reset email
-export const resetPassword = async (email: string) => {
-  try {
-    await sendPasswordResetEmail(auth, email);
-    return { success: true };
-  } catch (error: unknown) {
     return {
       success: false,
       error:

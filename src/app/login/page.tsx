@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import {
   signInWithEmail,
   signInWithGitHub,
-  resetPassword,
 } from "@/app/lib/auth";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
@@ -13,7 +12,6 @@ import { useAuth } from "@/app/contexts/AuthContext";
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [resetEmailSent, setResetEmailSent] = useState(false);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [verificationRequired, setVerificationRequired] = useState(false);
   const router = useRouter();
@@ -80,11 +78,18 @@ export default function LoginPage() {
         console.log(
           "Email login successful, auth state will trigger redirect to profile..."
         );
+        // Keep loading state until redirect happens
       } else {
+        // Check if it's a verification error
+        if ('needsVerification' in result && result.needsVerification) {
+          // Store flag for verification required message
+          localStorage.setItem('verification_required', 'true');
+        }
         setError(result.error || "Login failed");
         setLoading(false);
       }
-    } catch {
+    } catch (error) {
+      console.error('Login error:', error);
       setError("An unexpected error occurred");
       setLoading(false);
     }
@@ -181,22 +186,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          {resetEmailSent ? (
-            <div className="text-center space-y-4">
-              <div className="p-4 bg-green-50 border border-green-200 rounded-md">
-                <p className="text-green-800">
-                  Password reset email sent! Check your inbox.
-                </p>
-              </div>
-              <button
-                onClick={() => setResetEmailSent(false)}
-                className="text-blue-600 hover:text-blue-500 text-sm font-medium"
-              >
-                Back to login
-              </button>
-            </div>
-          ) : (
-            <form className="mt-8 space-y-6" onSubmit={handleEmailLogin}>
+          <form className="mt-8 space-y-6" onSubmit={handleEmailLogin}>
               <div className="space-y-4">
                 <div>
                   <label
@@ -241,33 +231,6 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const email = (
-                        document.getElementById("email") as HTMLInputElement
-                      )?.value;
-                      if (email) {
-                        resetPassword(email).then((result) => {
-                          if (result.success) {
-                            setResetEmailSent(true);
-                          } else {
-                            setError(result.error || "Password reset failed");
-                          }
-                        });
-                      } else {
-                        setError("Please enter your email first");
-                      }
-                    }}
-                    className="font-medium text-blue-600 hover:text-blue-500"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-              </div>
-
               <div className="space-y-4">
                 <button
                   type="submit"
@@ -293,8 +256,7 @@ export default function LoginPage() {
                 </button>
               </div>
             </form>
-          )}
-        </div>
+          </div>
       </div>
     </div>
   );

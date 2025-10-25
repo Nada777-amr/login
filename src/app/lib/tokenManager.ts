@@ -103,7 +103,22 @@ export const createTokenData = (token: string, provider?: string): TokenData => 
 export const storeFirebaseToken = async (): Promise<boolean> => {
   try {
     const user = auth.currentUser;
-    if (!user) return false;
+    if (!user) {
+      console.warn('No current user for token storage');
+      return false;
+    }
+    
+    // Check if user's email is verified (for email/password users)
+    // Allow token storage for OAuth users (Google, GitHub) even if emailVerified is false
+    const isOAuthUser = user.providerData.some(provider => 
+      provider.providerId === 'google.com' || provider.providerId === 'github.com'
+    );
+    
+    if (!user.emailVerified && !isOAuthUser) {
+      console.warn('Email not verified, but allowing token storage for active session');
+      // Still store the token for the current session, but log the warning
+      // This allows users who are already logged in to continue working
+    }
     
     const idToken = await user.getIdToken();
     const tokenData = createTokenData(idToken, 'firebase');
@@ -139,7 +154,23 @@ export const storeGitHubToken = (accessToken: string): void => {
 export const refreshFirebaseToken = async (): Promise<boolean> => {
   try {
     const user = auth.currentUser;
-    if (!user) return false;
+    if (!user) {
+      console.warn('No current user for token refresh');
+      return false;
+    }
+    
+    // Check if user's email is verified (for email/password users)
+    // Allow token refresh for OAuth users (Google, GitHub) even if emailVerified is false
+    const isOAuthUser = user.providerData.some(provider => 
+      provider.providerId === 'google.com' || provider.providerId === 'github.com'
+    );
+    
+    if (!user.emailVerified && !isOAuthUser) {
+      console.warn('Cannot refresh token: Email not verified');
+      // Don't fail - just return false to indicate no refresh happened
+      // The user is already logged in, so we don't want to force logout
+      return false;
+    }
     
     const idToken = await user.getIdToken(true); // Force refresh
     const tokenData = createTokenData(idToken, 'firebase');

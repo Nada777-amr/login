@@ -126,31 +126,6 @@ const AdminPage = () => {
     }
   };
 
-  // 🔹 Reset user password
-  const handleResetPassword = async (email: string) => {
-    if (!confirm(`Send password reset email to ${email}?`)) return;
-    setProcessing(true);
-    try {
-      const res = await fetch('/api/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to reset password');
-      }
-
-      alert(`✅ Password reset email sent to ${email}`);
-    } catch (error: any) {
-      console.error(error);
-      alert('Error resetting password: ' + error.message);
-    } finally {
-      setProcessing(false);
-    }
-  };
-
   // 🔹 Enable / Disable user
   const handleToggleUserStatus = async (uid: string, docId: string, currentStatus?: boolean) => {
     setProcessing(true);
@@ -219,13 +194,6 @@ const AdminPage = () => {
                         className="px-3 py-1 text-sm rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Make {u.role === 'admin' ? 'User' : 'Admin'}
-                      </button>
-                      <button
-                        disabled={processing}
-                        onClick={() => handleResetPassword(u.email)}
-                        className="px-3 py-1 text-sm rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Reset Password
                       </button>
                       <button
                         disabled={processing}
